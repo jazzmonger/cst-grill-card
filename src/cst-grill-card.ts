@@ -3,7 +3,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { resolveEntities, pillForP, PILL_TO_P, findGrillDevices } from './entities';
 import './editor';
 
-const VERSION = '0.1.0';
+const VERSION = '0.1.1';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export interface CstGrillCardConfig {
@@ -16,6 +16,15 @@ export interface CstGrillCardConfig {
 }
 
 type Pt = [number, number];
+// Average points into fixed time buckets so dense sensors (thousands of samples/day) draw cleanly.
+function bucket(pts: Pt[], t0: number, t1: number, n: number): Pt[] {
+  if (pts.length <= n) return pts;
+  const w = (t1 - t0) / n, sum = new Array(n).fill(0), cnt = new Array(n).fill(0);
+  for (const [t, v] of pts) { const i = Math.min(n - 1, Math.max(0, Math.floor((t - t0) / w))); sum[i] += v; cnt[i]++; }
+  const out: Pt[] = [];
+  for (let i = 0; i < n; i++) if (cnt[i]) out.push([t0 + (i + 0.5) * w, sum[i] / cnt[i]]);
+  return out;
+}
 const TABS = [
   { id: 'control', label: 'Control', icon: 'mdi:view-dashboard-outline' },
   { id: 'temps', label: 'Temps', icon: 'mdi:chart-line' },
@@ -102,6 +111,13 @@ export class CstGrillCard extends LitElement {
           if (s !== 'on' && start !== null) { cooks.push({ start, end: t }); start = null; }
         }
         if (start !== null) cooks.push({ start, end: Date.now() });
+        // Merge on/off blips < 5 min apart, then drop runs under 10 min (test toggles).
+        const merged: typeof cooks = [];
+        for (const c of cooks) {
+          const last = merged[merged.length - 1];
+          if (last && c.start - last.end < 5 * 60e3) last.end = c.end; else merged.push({ ...c });
+        }
+        cooks.splice(0, cooks.length, ...merged.filter((c) => c.end - c.start >= 10 * 60e3));
         for (const c of cooks) {
           const pts = (h.chamber ?? []).filter((p) => p[0] >= c.start && p[0] <= c.end);
           if (pts.length) c.peak = Math.max(...pts.map((p) => p[1]));
@@ -219,7 +235,7 @@ export class CstGrillCard extends LitElement {
       const before = raw.filter((p) => p[0] < t0).pop();
       if (before) pts.unshift([t0, before[1]]);
       if (live !== undefined) pts.push([now, live]);
-      return { k, pts };
+      return { k, pts: k === 'setpoint' ? pts : bucket(pts, t0, now, 300) };
     }).filter((s) => big || s.k !== 'firepot');
     const all = series.flatMap((s) => s.pts.map((p) => p[1]));
     const ymin = all.length ? Math.floor(Math.min(...all) / 25) * 25 : 0;
@@ -260,7 +276,7 @@ export class CstGrillCard extends LitElement {
     return html`<div class="group"><div class="ghead">Recent cooks (14 days, from Smoker Power history)</div>
       ${this._cooks.length ? this._cooks.map((c) => html`<div class="row"><ha-icon icon="mdi:grill-outline"></ha-icon>
         <div class="rmain"><div>${fmt(c.start)}</div><div class="sub">${dur(c.end - c.start)}${c.peak ? ` · peak ${Math.round(c.peak)}°F` : ''}</div></div></div>`)
-        : html`<div class="row sub">No cooks recorded yet.</div>`}
+        : html`<div class="row sub">No cooks of 10 min or longer yet.</div>`}
     </div>`;
   }
 
@@ -295,7 +311,7 @@ export class CstGrillCard extends LitElement {
       <div class="group"><div class="ghead">Prime auger</div>
         ${this._btnRow('prime_90', 'Prime 90 s')}${this._btnRow('prime_180', 'Prime 180 s')}${this._btnRow('prime_350', 'Prime 350 s')}${this._btnRow('prime_cancel', 'Cancel prime')}</div>
       <div class="group"><div class="ghead">About</div>
-        ${this._infoRow('firmware', 'Firmware')}${this._infoRow('hostname', 'Hostname')}${this._infoRow('tailnet_ip', 'Tailnet IP')}
+        ${this._infoRow('firmware', 'Firmware')}${this._infoRow('hostname', 'Hostname')}${this._infoRow('wifi_ssid', 'Wi-Fi network')}${this._infoRow('wifi_ip', 'IP address')}${this._infoRow('tailnet_ip', 'Tailnet IP')}
         ${this._btnRow('restart', 'Restart controller', true)}${this._btnRow('estop', 'Emergency stop', true)}</div>
       <div class="ver">cst-grill-card ${VERSION}</div>`;
   }

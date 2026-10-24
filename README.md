@@ -43,7 +43,7 @@ entities:              # optional overrides
 | links | `binary_sensor.*_tailnet_vpn_linked`, `*_phone_lan_linked`, `*_ble_client_linked`, `*_home_assistant_api_linked` | link icons |
 | settings | `switch.*_settings_units_fahrenheit`, `*_settings_theme_dark`, `number.*_settings_brightness`, `*_settings_relight_f`, `*_settings_pellet_warn_pct`, `*_settings_chamber_cal_offset_f`, `switch.*_pellet_tof_sensor` | web_api / pellet |
 | prime | `button.*_manual_prime_90/180/350/cancel` | Manual Prime |
-| about | `sensor.*_firmware_version`, `*_lan_hostname`, `*_tailscale_tailnet_ip` | text sensors |
+| about | `sensor.*_firmware_version`, `*_lan_hostname`, `*_wifi_ssid`, `*_wifi_ip_address`, `*_tailscale_tailnet_ip` | text sensors |
 | safety | `button.*_emergency_stop`, `*_controller_restart` | control |
 
 The temperature chart and Cooks list use HA's recorder history (`history/history_during_period`).

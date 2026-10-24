@@ -31,6 +31,8 @@ export const ENTITY_DEFS: Record<string, EntityDef> = {
   chamber_cal:   { domain: 'number', suffix: 'settings_chamber_cal_offset_f', label: 'Chamber cal offset °F', yaml: 'cs1pot_web_api' },
   firmware:      { domain: 'sensor', suffix: 'firmware_version', label: 'Firmware version', yaml: 'cs1pot_settings_ui (text_sensor)' },
   hostname:      { domain: 'sensor', suffix: 'lan_hostname', label: 'LAN hostname', yaml: 'cs1pot_settings_ui (text_sensor)' },
+  wifi_ssid:     { domain: 'sensor', suffix: 'wifi_ssid', label: 'Wi-Fi SSID', yaml: 'wifi_info ssid' },
+  wifi_ip:       { domain: 'sensor', suffix: 'wifi_ip_address', label: 'Wi-Fi IP', yaml: 'wifi_info ip_address' },
   tailnet_ip:    { domain: 'sensor', suffix: 'tailscale_tailnet_ip', label: 'Tailnet IP', yaml: 'cs1pot_tailnet (text_sensor)' },
   link_vpn:      { domain: 'binary_sensor', suffix: 'tailnet_vpn_linked', label: 'VPN linked', yaml: 'cs1pot_link_icons' },
   link_lan:      { domain: 'binary_sensor', suffix: 'phone_lan_linked', label: 'Wi-Fi (phone LAN) linked', yaml: 'cs1pot_link_icons' },
