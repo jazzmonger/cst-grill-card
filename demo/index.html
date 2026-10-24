@@ -1,0 +1,23 @@
+<!doctype html><html><head><meta charset="utf-8"></head><body style="background:#111;margin:0;padding:16px;width:420px">
+<script>
+customElements.define('ha-card',class extends HTMLElement{});
+customElements.define('ha-switch',class extends HTMLElement{constructor(){super();this.attachShadow({mode:'open'}).innerHTML='<span style="display:inline-block;width:34px;height:18px;border-radius:9px;background:#2EE6FF"></span>'}});
+customElements.define('ha-icon',class extends HTMLElement{connectedCallback(){this.style.cssText='display:inline-block;width:20px;height:20px;border-radius:50%;border:2px solid currentColor;box-sizing:border-box'}});
+const N='sensor.chain_smoker_1_pot_';
+const S={},add=(id,s,a={})=>S[id]={entity_id:id,state:String(s),attributes:a};
+add(N+'chamber_temperature',212);add(N+'firepot_temperature',486);
+add('number.chain_smoker_1_pot_smoker_set_temperature',225,{min:140,max:450,step:5,unit_of_measurement:'°F'});
+add('switch.chain_smoker_1_pot_smoker_power','on');add('select.chain_smoker_1_pot_cook_mode','Smoke');add('select.chain_smoker_1_pot_p_select','P2');
+add('switch.chain_smoker_1_pot_fan','on');add('switch.chain_smoker_1_pot_auger','off');add('switch.chain_smoker_1_pot_hotrod','off');add('switch.chain_smoker_1_pot_manual_auger','off');
+add(N+'pellet_level',72);add(N+'status_message','Smoking · holding 225°F');add('binary_sensor.chain_smoker_1_pot_tailnet_vpn_linked','on');add('binary_sensor.chain_smoker_1_pot_home_assistant_api_linked','on');add('binary_sensor.chain_smoker_1_pot_ble_client_linked','off');
+add('switch.chain_smoker_1_pot_settings_units_fahrenheit','on');add('number.chain_smoker_1_pot_settings_brightness',80,{min:0,max:100,step:1,unit_of_measurement:'%'});add('number.chain_smoker_1_pot_settings_relight_f',150,{min:100,max:250,step:5,unit_of_measurement:'°F'});add(N+'firmware_version','0.0.94');add(N+'lan_hostname','chainsmoker1pot');add('button.chain_smoker_1_pot_manual_prime_90','unknown');add('button.chain_smoker_1_pot_emergency_stop','unknown');
+const ents={};for(const id in S)ents[id]={entity_id:id,device_id:'dev1'};
+const now=Date.now()/1000;const hist=(f)=>Array.from({length:240},(_,i)=>({lu:now-(240-i)*360,s:f(i)}));
+window.hass={states:S,entities:ents,devices:{dev1:{id:'dev1',name:'Chain Smoker 1-Pot'}},callService:(...a)=>console.log('svc',a),
+ callWS:async m=>m.entity_ids.length>1?{[N+'chamber_temperature']:hist(i=>Math.min(225,60+i*3)+Math.sin(i/4)*4),[N+'firepot_temperature']:hist(i=>Math.min(480,80+i*8)+Math.sin(i/3)*15),'number.chain_smoker_1_pot_smoker_set_temperature':hist(i=>i<20?180:225)}:{'switch.chain_smoker_1_pot_smoker_power':[{lu:now-86400*3,s:'on'},{lu:now-86400*3+30000,s:'off'},{lu:now-86400,s:'on'}]}};
+</script>
+<script type="module">
+import '../dist/cst-grill-card.js';
+const tab=new URLSearchParams(location.search).get('tab')||'control';
+const c=document.createElement('cst-grill-card');c.setConfig({type:'custom:cst-grill-card',default_tab:tab});c.hass=window.hass;document.body.appendChild(c);
+</script></body></html>

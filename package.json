@@ -1,0 +1,20 @@
+{
+  "name": "cst-grill-card",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Lovelace card for CST Chain Smoker 1-Pot grill controllers (ESPHome). Based on custom-cards/boilerplate-card.",
+  "license": "MIT",
+  "scripts": {
+    "build": "rollup -c",
+    "watch": "rollup -c -w"
+  },
+  "dependencies": { "lit": "^3.3.2" },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^15.2.0",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^11.1.0",
+    "rollup": "^4.24.0",
+    "tslib": "^2.8.0",
+    "typescript": "^5.6.0"
+  }
+}
