@@ -69,10 +69,19 @@ export function resolveEntities(hass: any, deviceId?: string, overrides: Record<
   return out;
 }
 
+// A CST 1-Pot device has a cook_mode select AND a chamber_temperature sensor. The 5-Pot
+// also has *_smoker_set_temperature, so that alone is not enough. Available devices sort first.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function findGrillDevices(hass: any): { id: string; name: string }[] {
   const devs = hass?.devices ?? {};
-  const reg = hass?.entities ?? {};
-  const hasSetpoint = new Set(Object.values(reg).filter((e: any) => String(e.entity_id).endsWith('_smoker_set_temperature')).map((e: any) => e.device_id));
-  return Object.values(devs).filter((d: any) => hasSetpoint.has(d.id)).map((d: any) => ({ id: d.id, name: d.name_by_user || d.name }));
+  const reg: any[] = Object.values(hass?.entities ?? {});
+  const has = (sfx: string) => new Set(reg.filter((e) => String(e.entity_id).endsWith(sfx)).map((e) => e.device_id));
+  const mode = has('_cook_mode'), chamber = has('_chamber_temperature'), setp = has('_smoker_set_temperature');
+  const live = (id: string) => reg.some((e) => e.device_id === id && String(e.entity_id).endsWith('_chamber_temperature')
+    && !['unavailable', 'unknown', undefined].includes(hass?.states?.[e.entity_id]?.state));
+  return Object.values(devs)
+    .filter((d: any) => mode.has(d.id) && chamber.has(d.id) && setp.has(d.id))
+    .map((d: any) => ({ id: d.id, name: d.name_by_user || d.name, live: live(d.id) }))
+    .sort((a: any, b: any) => Number(b.live) - Number(a.live))
+    .map(({ id, name }) => ({ id, name }));
 }
