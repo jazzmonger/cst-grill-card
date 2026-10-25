@@ -3,7 +3,7 @@ import { property, state } from 'lit/decorators.js';
 import { resolveEntities, pillForP, PILL_TO_P, findGrillDevices } from './entities';
 import './editor';
 
-const VERSION = '0.1.3';
+const VERSION = '0.1.4';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export interface CstGrillCardConfig {
