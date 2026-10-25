@@ -1,9 +1,9 @@
 import { LitElement, html, css, svg, nothing, PropertyValues } from 'lit';
-import { customElement, property, state } from 'lit/decorators.js';
+import { property, state } from 'lit/decorators.js';
 import { resolveEntities, pillForP, PILL_TO_P, findGrillDevices } from './entities';
 import './editor';
 
-const VERSION = '0.1.2';
+const VERSION = '0.1.3';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export interface CstGrillCardConfig {
@@ -33,7 +33,6 @@ const TABS = [
 ] as const;
 const WINDOWS = [0.5, 1, 2, 4, 8, 12, 24];
 
-@customElement('cst-grill-card')
 export class CstGrillCard extends LitElement {
   @property({ attribute: false }) public hass: any;
   @state() private _config!: CstGrillCardConfig;
@@ -379,5 +378,8 @@ export class CstGrillCard extends LitElement {
 }
 
 (window as any).customCards = (window as any).customCards || [];
-(window as any).customCards.push({ type: 'cst-grill-card', name: 'CST Grill Card', description: 'Chain Smoker 1-Pot grill controller (ESPHome), styled like the CST1Pot app.', preview: true });
+if (!(window as any).customCards.some((c: any) => c.type === 'cst-grill-card')) (window as any).customCards.push({ type: 'cst-grill-card', name: 'CST Grill Card', description: 'Chain Smoker 1-Pot grill controller (ESPHome), styled like the CST1Pot app.', preview: true });
 console.info(`%c CST-GRILL-CARD %c ${VERSION} `, 'color:#051014;background:#2EE6FF;font-weight:700', 'color:#2EE6FF;background:#0C0E12');
+
+// Guarded define: the card may be loaded twice (integration copy + a manual /local resource).
+if (!customElements.get('cst-grill-card')) customElements.define('cst-grill-card', CstGrillCard);

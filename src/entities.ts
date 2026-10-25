@@ -1,18 +1,18 @@
 // Entity map derived from the CST1Pot ESPHome YAML (packages/*.yaml).
 // ESPHome entity_ids are <domain>.<node>_<slug(name)>, so we match by suffix.
-export interface EntityDef { domain: string; suffix: string; label: string; yaml: string }
+export interface EntityDef { domain: string; suffix: string; label: string; yaml: string; alt?: string[] }
 
 export const ENTITY_DEFS: Record<string, EntityDef> = {
-  chamber:       { domain: 'sensor', suffix: 'chamber_temperature', label: 'Chamber temperature', yaml: 'cs1pot_sensors: "Chamber Temperature" (rtd_temperature_f)' },
+  chamber:       { domain: 'sensor', suffix: 'chamber_temperature', alt: ['rtd_temperature'], label: 'Chamber temperature', yaml: 'cs1pot_sensors: "Chamber Temperature" (rtd_temperature_f)' },
   firepot:       { domain: 'sensor', suffix: 'firepot_temperature', label: 'FirePot temperature', yaml: 'cs1pot_firepot_tc: "FirePot Temperature"' },
   setpoint:      { domain: 'number', suffix: 'smoker_set_temperature', label: 'Set temperature', yaml: 'cs1pot_control: "Smoker Set Temperature" 140-450 step 5' },
-  power:         { domain: 'switch', suffix: 'smoker_power', label: 'Smoker power', yaml: 'cs1pot_control: "Smoker Power" (go)' },
+  power:         { domain: 'switch', suffix: 'smoker_power', alt: ['system_on_off'], label: 'Smoker power', yaml: 'cs1pot_control: "Smoker Power" (go)' },
   mode:          { domain: 'select', suffix: 'cook_mode', label: 'Cook mode', yaml: 'cs1pot_control: "Cook Mode" Heat/Smoke' },
   smoke:         { domain: 'select', suffix: 'p_select', label: 'Smoke level (P select)', yaml: 'cs1pot_control: "P Select" P0-P4/Adaptive' },
   status:        { domain: 'sensor', suffix: 'status_message', label: 'Status message', yaml: 'cs1pot_control: "Status Message" (text_sensor)' },
-  fan:           { domain: 'switch', suffix: 'fan', label: 'Fan (GPIO)', yaml: 'cs1pot_gpio: "-Fan"' },
-  auger:         { domain: 'switch', suffix: 'auger', label: 'Auger (GPIO)', yaml: 'cs1pot_gpio: "-Auger"' },
-  hotrod:        { domain: 'switch', suffix: 'hotrod', label: 'Hot rod (GPIO)', yaml: 'cs1pot_gpio: "-HotRod"' },
+  fan:           { domain: 'switch', suffix: 'fan', alt: ['fans_on_off'], label: 'Fan (GPIO)', yaml: 'cs1pot_gpio: "-Fan"' },
+  auger:         { domain: 'switch', suffix: 'auger', alt: ['auger_1_sw'], label: 'Auger (GPIO)', yaml: 'cs1pot_gpio: "-Auger"' },
+  hotrod:        { domain: 'switch', suffix: 'hotrod', alt: ['hotrod_1_sw'], label: 'Hot rod (GPIO)', yaml: 'cs1pot_gpio: "-HotRod"' },
   manual_auger:  { domain: 'switch', suffix: 'manual_auger', label: 'Manual auger', yaml: 'cs1pot_web_api: "Manual Auger"' },
   manual_hotrod: { domain: 'switch', suffix: 'manual_hotrod', label: 'Manual hot rod', yaml: 'cs1pot_web_api: "Manual Hotrod"' },
   prime_active:  { domain: 'binary_sensor', suffix: 'prime_active', label: 'Prime active', yaml: 'cs1pot_web_api: "Prime Active"' },
@@ -59,8 +59,11 @@ export function resolveEntities(hass: any, deviceId?: string, overrides: Record<
   }
   for (const [key, def] of Object.entries(ENTITY_DEFS)) {
     if (overrides[key]) { out[key] = overrides[key]; continue; }
-    const want = `_${def.suffix}`;
-    const cands = ids.filter((id) => id.startsWith(def.domain + '.') && (id.endsWith(want) || id === `${def.domain}.${def.suffix}`));
+    let cands: string[] = [];
+    for (const sfx of [def.suffix, ...(def.alt ?? [])]) {
+      cands = ids.filter((id) => id.startsWith(def.domain + '.') && (id.endsWith(`_${sfx}`) || id === `${def.domain}.${sfx}`));
+      if (cands.length) break;
+    }
     // Prefer the shortest match (avoids e.g. "auger" matching "manual_auger").
     cands.sort((a, b) => a.length - b.length);
     const exact = cands.filter((c) => !/_manual_(auger|hotrod)$/.test(c) || def.suffix.startsWith('manual'));
@@ -76,11 +79,12 @@ export function findGrillDevices(hass: any): { id: string; name: string }[] {
   const devs = hass?.devices ?? {};
   const reg: any[] = Object.values(hass?.entities ?? {});
   const has = (sfx: string) => new Set(reg.filter((e) => String(e.entity_id).endsWith(sfx)).map((e) => e.device_id));
-  const mode = has('_cook_mode'), chamber = has('_chamber_temperature'), setp = has('_smoker_set_temperature');
-  const live = (id: string) => reg.some((e) => e.device_id === id && String(e.entity_id).endsWith('_chamber_temperature')
+  // 1-Pot: cook_mode + chamber_temperature + set temp. 5-Pot: rtd_temperature + set temp.
+  const mode = has('_cook_mode'), chamber = has('_chamber_temperature'), rtd = has('_rtd_temperature'), setp = has('_smoker_set_temperature');
+  const live = (id: string) => reg.some((e) => e.device_id === id && /_(chamber|rtd)_temperature$/.test(String(e.entity_id))
     && !['unavailable', 'unknown', undefined].includes(hass?.states?.[e.entity_id]?.state));
   return Object.values(devs)
-    .filter((d: any) => mode.has(d.id) && chamber.has(d.id) && setp.has(d.id))
+    .filter((d: any) => setp.has(d.id) && ((mode.has(d.id) && chamber.has(d.id)) || rtd.has(d.id)))
     .map((d: any) => ({ id: d.id, name: d.name_by_user || d.name, live: live(d.id) }))
     .sort((a: any, b: any) => Number(b.live) - Number(a.live))
     .map(({ id, name }) => ({ id, name }));

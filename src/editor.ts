@@ -1,9 +1,8 @@
 import { LitElement, html, css } from 'lit';
-import { customElement, property, state } from 'lit/decorators.js';
+import { property, state } from 'lit/decorators.js';
 import { ENTITY_DEFS, findGrillDevices, resolveEntities } from './entities';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-@customElement('cst-grill-card-editor')
 export class CstGrillCardEditor extends LitElement {
   @property({ attribute: false }) public hass: any;
   @state() private _config: any = {};
@@ -55,3 +54,6 @@ export class CstGrillCardEditor extends LitElement {
     button { margin:4px 0 10px; background:none; border:0; color:var(--primary-color); cursor:pointer; font-size:14px; padding:0; }
   `;
 }
+
+// Guarded define: the card may be loaded twice (integration copy + a manual /local resource).
+if (!customElements.get('cst-grill-card-editor')) customElements.define('cst-grill-card-editor', CstGrillCardEditor);
