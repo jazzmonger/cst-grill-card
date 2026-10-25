@@ -3,7 +3,7 @@ import { property, state } from 'lit/decorators.js';
 import { resolveEntities, pillForP, PILL_TO_P, findGrillDevices } from './entities';
 import './editor';
 
-const VERSION = '0.1.4';
+const VERSION = '0.1.5';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export interface CstGrillCardConfig {
@@ -193,10 +193,10 @@ export class CstGrillCard extends LitElement {
         <div class="setVal"><div class="lbl">SET</div><div class="big">${setF !== undefined ? Math.round(setF) : '--'}<small>°F</small></div></div>
         <button class="round" @click=${() => this._nudge(1)}><ha-icon icon="mdi:plus"></ha-icon></button>
       </div>
-      <div class="lblc">Smoke Level</div>
+      ${smokeOn ? html`<div class="lblc">Smoke Level</div>
       <div class="pills">
         ${[1, 2, 3, 4, 5].map((n) => html`<button class="pill ${pill === n ? 'on' : ''}" @click=${() => this.call('select', 'select_option', 'smoke', { option: PILL_TO_P[n - 1] })}>${n}</button>`)}
-      </div>
+      </div>` : nothing}
       ${pellet !== undefined && (this.st('pellet_tof') ? this.on('pellet_tof') : true) ? html`
         <div class="pellet"><span>Pellets</span><div class="bar"><div style="width:${Math.max(0, Math.min(100, pellet))}%"></div></div><span>${Math.round(pellet)}%</span></div>` : nothing}
       ${this._chart(WINDOWS[this._win], 130, false)}
