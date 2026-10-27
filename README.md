@@ -7,9 +7,10 @@ The card only reads the entities that the native **ESPHome integration** already
 ## Install
 
 ### HACS (custom repository)
-1. HACS → ⋮ → **Custom repositories** → add `https://github.com/jazzmonger/cst-grill-card`, category **Dashboard**.
-   (The repo is private: HACS needs a GitHub token that can read it, or make the repo public.)
+1. HACS → ⋮ → **Custom repositories** → add `https://github.com/jazzmonger/cst-grill-card`, category **Dashboard** (Lovelace plugin).
 2. Install **CST Grill Card**, then reload the browser.
+
+This repo is **public**; no GitHub token is required. For the full sidebar dashboard, use the **CST Grill** integration (`jazzmonger/cst-grill`, category **Integration**).
 
 ### Manual
 1. Copy `dist/cst-grill-card.js` to `/config/www/cst-grill-card.js`.
